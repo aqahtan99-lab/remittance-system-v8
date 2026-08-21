@@ -1,24 +1,4202 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f3d5e"><link rel="manifest" href="manifest.json"><title>نظام الحوالات</title><style>
-:root{--nav:#0f3d5e;--nav2:#155b83;--bg:#f4f7fa;--card:#fff;--text:#183247;--muted:#718096;--line:#dbe4ec;--ok:#15803d;--warn:#b45309;--bad:#b91c1c}*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{display:flex;min-height:100vh}.side{width:245px;background:linear-gradient(180deg,var(--nav),#092b42);color:#fff;padding:20px 14px;position:fixed;inset:0 auto 0 0;right:auto;z-index:3}.brand{font-size:21px;font-weight:800;padding:10px 8px 22px}.nav button{width:100%;border:0;background:transparent;color:#dcecf6;text-align:right;padding:13px 12px;border-radius:10px;margin:2px 0}.nav button.active,.nav button:hover{background:rgba(255,255,255,.12);color:#fff}.main{margin-left:245px;width:calc(100% - 245px);padding:22px;max-width:1600px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:18px}.title h1{margin:0 0 4px;font-size:26px}.muted{color:var(--muted);font-size:13px}.sync{background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:10px;font-size:13px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:0 4px 14px rgba(17,44,67,.05)}.stat .num{font-size:25px;font-weight:800;margin-top:8px}.stat .label{color:var(--muted);font-size:13px}.section{margin-top:18px}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.section-head h2{font-size:18px;margin:0}.btn{border:0;border-radius:10px;padding:10px 14px;background:var(--nav);color:#fff}.btn.secondary{background:#e8eef3;color:var(--text)}.btn.ok{background:var(--ok)}.btn.warn{background:var(--warn)}.btn.bad{background:var(--bad)}.btn.small{padding:7px 10px;font-size:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.toolbar input,.toolbar select,.form input,.form select,.form textarea{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px;outline:none}.toolbar input{min-width:220px}.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;background:#fff}.table th,.table td{padding:11px 9px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:right}.table th{background:#f8fafc;font-size:13px}.badge{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:700}.green{background:#dcfce7;color:#166534}.orange{background:#ffedd5;color:#9a3412}.red{background:#fee2e2;color:#991b1b}.blue{background:#dbeafe;color:#1e40af}.form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form .full{grid-column:1/-1}.form label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.empty{text-align:center;color:var(--muted);padding:30px}.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}.modal.show{display:flex}.modalbox{background:#fff;width:min(760px,100%);max-height:90vh;overflow:auto;border-radius:16px;padding:20px}.close{float:left;border:0;background:#eef2f6;border-radius:8px;padding:5px 9px}.mobilebar{display:none}.danger{color:var(--bad)}@media(max-width:900px){.side{display:none}.main{margin:0;width:100%;padding:14px;padding-bottom:80px}.grid{grid-template-columns:repeat(2,1fr)}.form{grid-template-columns:1fr}.mobilebar{display:flex;position:fixed;bottom:0;right:0;left:0;background:#fff;border-top:1px solid var(--line);z-index:5}.mobilebar{overflow-x:auto;scrollbar-width:none}.mobilebar::-webkit-scrollbar{display:none}.mobilebar button{flex:1 0 16.6667%;min-width:68px;border:0;background:#fff;padding:7px 3px 9px;font-size:11px;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.mobilebar .navicon{font-size:24px;line-height:1;display:block}.mobilebar .navlabel{font-size:10px;line-height:1.15;display:block;white-space:nowrap}.mobilebar button.active{color:var(--nav);font-weight:800}.top{align-items:flex-start}.title h1{font-size:21px}}
-</style></head><body><div class="app"><aside class="side"><div class="brand">💰 نظام الحوالات</div><div class="nav" id="nav"></div></aside><main class="main"><div class="top"><div class="title"><h1 id="pageTitle">الرئيسية</h1><div class="muted">إدارة العملاء والشركات والحوالات والتسديدات</div></div><div class="sync" id="sync">☁️ محلي — فعّل المزامنة من الإعدادات</div></div><div id="view"></div></main></div><div class="mobilebar" id="mobilebar"></div><div class="modal" id="modal"><div class="modalbox"><button class="close" onclick="closeModal()">✕</button><div id="modalBody"></div></div></div><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script><script>
-const KEY='remit_app_v3';const state=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('remit_app_v1')||'null')||{customers:[],companies:[],transfers:[],payments:[],clears:[],settings:{office:'نظام الحوالات',sync:{enabled:false,url:'',token:'',key:'main',updatedAt:0}}};state.settings=state.settings||{};state.settings.sync=state.settings.sync||{enabled:false,url:'',token:'',key:'main',updatedAt:0};let page='dashboard';let editId=null;let syncing=false;
-const navs=[['dashboard','🏠','الرئيسية'],['customers','👤','العملاء'],['companies','🏢','الشركات'],['transfers','💸','الحوالات'],['statements','📊','كشف الحساب'],['payments','💰','التسديدات'],['clears','🔄','المقاصة'],['reports','📈','التقارير'],['alerts','🔔','التنبيهات'],['settings','⚙️','الإعدادات']];
-function save(){state.settings.sync=state.settings.sync||{enabled:false,url:'',token:'',key:'main',updatedAt:0};state.settings.sync.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(state));document.getElementById('sync').textContent=state.settings.sync.enabled?'☁️ محفوظ محلياً — جارٍ المزامنة…':'☁️ محفوظ على هذا الجهاز — آخر حفظ الآن';if(state.settings.sync.enabled&&!syncing)syncPush()}async function syncPush(){const cfg=state.settings.sync||{};if(!cfg.enabled||!cfg.url||!cfg.key)return;syncing=true;try{const res=await fetch(cfg.url.replace(/\/$/,'')+'/data/'+encodeURIComponent(cfg.key),{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(cfg.token||'')},body:JSON.stringify({updatedAt:cfg.updatedAt,data:state})});if(!res.ok)throw Error('HTTP '+res.status);document.getElementById('sync').textContent='☁️ تمت المزامنة — '+new Date().toLocaleTimeString('ar-IQ');}catch(e){document.getElementById('sync').textContent='⚠️ تعذر الاتصال بالسحابة';}finally{syncing=false}}async function syncPull(){const cfg=state.settings.sync||{};if(!cfg.enabled||!cfg.url||!cfg.key)return alert('فعّل المزامنة وأدخل رابط الخادم ورمز المزامنة أولاً');try{document.getElementById('sync').textContent='☁️ جارٍ جلب البيانات…';const res=await fetch(cfg.url.replace(/\/$/,'')+'/data/'+encodeURIComponent(cfg.key),{headers:{'Authorization':'Bearer '+(cfg.token||'')}});if(res.status===404)return alert('لا توجد بيانات سحابية لهذا المفتاح');if(!res.ok)throw Error('HTTP '+res.status);const remote=await res.json();if(!remote.data)return alert('استجابة الخادم غير صالحة');const localTime=Number(cfg.updatedAt||0),remoteTime=Number(remote.updatedAt||0);if(remoteTime<localTime){if(!confirm('البيانات المحلية أحدث. هل تريد استبدالها بالبيانات السحابية؟'))return}else if(remoteTime===localTime&&!confirm('البيانات متطابقة تقريباً. هل تريد تحميلها؟'))return;Object.assign(state,remote.data);state.settings.sync=state.settings.sync||cfg;state.settings.sync.enabled=true;state.settings.sync.url=cfg.url;state.settings.sync.token=cfg.token;state.settings.sync.key=cfg.key;state.settings.sync.updatedAt=remoteTime;localStorage.setItem(KEY,JSON.stringify(state));render();document.getElementById('sync').textContent='☁️ تم جلب البيانات من السحابة';}catch(e){document.getElementById('sync').textContent='⚠️ فشل جلب البيانات';alert('تعذر الاتصال بخادم المزامنة. تأكد من الرابط ورمز المزامنة.')}}async function syncTest(){const cfg=state.settings.sync||{};if(!cfg.url)return alert('أدخل رابط خادم المزامنة');try{const r=await fetch(cfg.url.replace(/\/$/,'')+'/health',{headers:{'Authorization':'Bearer '+(cfg.token||'')}});if(!r.ok)throw Error();alert('✅ الاتصال بالخادم ناجح');}catch(e){alert('❌ تعذر الاتصال بالخادم')}}
-function money(n,c){const x=Number(n||0);return x.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:c==='IQD'?0:2})+' '+c}function id(prefix,list){return prefix+String(list.length+1).padStart(6,'0')}function customer(id){return state.customers.find(x=>x.id===id)}function company(id){return state.companies.find(x=>x.id===id)}function transfer(id){return state.transfers.find(x=>x.id===id)}
-function setPage(p){page=p;render()}function renderNav(){document.getElementById('nav').innerHTML=navs.map(n=>`<button class="${page===n[0]?'active':''}" onclick="setPage('${n[0]}')">${n[1]} ${n[2]}</button>`).join('');document.getElementById('mobilebar').innerHTML=[navs[0],navs[1],navs[3],navs[4],navs[5],navs[6]].map(n=>`<button aria-label="${n[2]}" title="${n[2]}" class="${page===n[0]?'active':''}" onclick="setPage('${n[0]}')"><span class="navicon">${n[1]}</span><span class="navlabel">${n[2]}</span></button>`).join('')}function render(){renderNav();document.getElementById('pageTitle').textContent=navs.find(n=>n[0]===page)?.[2]||'';({dashboard:dashboard,customers:customers,companies:companies,transfers:transfers,payments:payments,clears:clears,statements:statements,reports:reports,alerts:alerts,settings:settings}[page])()}
-function dashboard(){const today=new Date().toISOString().slice(0,10);const td=state.transfers.filter(t=>t.date===today).length;const comm=state.transfers.filter(t=>t.date===today).reduce((s,t)=>s+t.commission,0);document.getElementById('view').innerHTML=`<div class="grid"><div class="card stat"><div class="label">👤 العملاء</div><div class="num">${state.customers.length}</div></div><div class="card stat"><div class="label">🏢 الشركات</div><div class="num">${state.companies.length}</div></div><div class="card stat"><div class="label">💸 حوالات اليوم</div><div class="num">${td}</div></div><div class="card stat"><div class="label">💰 العمولات اليوم</div><div class="num">${money(comm,'USD')}</div></div></div><div class="section card"><div class="section-head"><h2>⚠️ الحوالات التي تحتاج متابعة</h2><button class="btn small" onclick="setPage('transfers')">عرض الكل</button></div>${lateRows()}</div><div class="section card"><div class="section-head"><h2>🚀 إجراءات سريعة</h2></div><div class="actions"><button class="btn" onclick="openTransfer()">➕ حوالة جديدة</button><button class="btn secondary" onclick="openCustomer()">👤 إضافة عميل</button><button class="btn secondary" onclick="openCompany()">🏢 إضافة شركة</button><button class="btn secondary" onclick="setPage('statements')">📊 كشف حساب</button></div></div>`}
-function lateRows(){const now=Date.now();const rows=state.transfers.map(t=>({...t,days:Math.floor((now-new Date(t.date).getTime())/86400000)})).filter(t=>t.days>=15).sort((a,b)=>b.days-a.days);if(!rows.length)return '<div class="empty">لا توجد حوالات تجاوزت 15 يوماً</div>';return `<div class="tablewrap"><table class="table"><thead><tr><th>الحوالة</th><th>العميل</th><th>الشركة</th><th>المبلغ</th><th>العمر</th></tr></thead><tbody>${rows.slice(0,10).map(t=>`<tr><td>${t.id}</td><td>${customer(t.customerId)?.name||'-'}</td><td>${company(t.companyId)?.name||'-'}</td><td>${money(t.total,t.currency)}</td><td><span class="badge ${t.days>=30?'red':'orange'}">${t.days} يوم</span></td></tr>`).join('')}</tbody></table></div>`}
-function customers(){document.getElementById('view').innerHTML=`<div class="card"><div class="section-head"><h2>👤 العملاء</h2><button class="btn" onclick="openCustomer()">➕ إضافة عميل</button></div><div class="toolbar"><input id="cq" placeholder="🔍 الاسم أو الهاتف" oninput="customers()"></div><div class="tablewrap"><table class="table"><thead><tr><th>رقم العميل</th><th>الاسم</th><th>الهاتف</th><th>USD</th><th>IQD</th><th></th></tr></thead><tbody>${customerRows()}</tbody></table></div></div>`}function customerRows(){const q=(document.getElementById('cq')?.value||'').toLowerCase();const arr=state.customers.filter(x=>(x.name+x.phone).toLowerCase().includes(q));if(!arr.length)return '<tr><td colspan="6" class="empty">لا يوجد عملاء</td></tr>';return arr.map(c=>{const b=balanceCustomer(c.id);return `<tr><td>${c.id}</td><td><b>${c.name}</b></td><td>${c.phone||'-'}</td><td>${money(b.USD,'USD')}</td><td>${money(b.IQD,'IQD')}</td><td><button class="btn small secondary" onclick="showCustomer('${c.id}')">عرض</button></td></tr>`}).join('')}
-function balanceCustomer(cid){let b={USD:0,IQD:0};state.transfers.filter(t=>t.customerId===cid).forEach(t=>b[t.currency]+=t.total);state.payments.filter(p=>p.customerId===cid).forEach(p=>{b[p.currency]+=(p.direction==='له'?-p.amount:p.amount)});state.clears.filter(c=>c.customerId===cid).forEach(c=>{b[c.currency]+=(c.direction==='شركة إلى عميل'?-c.amount:c.amount)});return b}
-function balanceCompany(cid){let b={USD:0,IQD:0};state.transfers.filter(t=>t.companyId===cid).forEach(t=>b[t.currency]+=t.amount);state.clears.filter(c=>c.companyId===cid).forEach(c=>{b[c.currency]+=(c.direction==='شركة إلى عميل'?-c.amount:c.amount)});return b}
-function companies(){document.getElementById('view').innerHTML=`<div class="card"><div class="section-head"><h2>🏢 الشركات</h2><button class="btn" onclick="openCompany()">➕ إضافة شركة</button></div><div class="toolbar"><input id="sq" placeholder="🔍 اسم الشركة أو الهاتف" oninput="companies()"></div><div class="tablewrap"><table class="table"><thead><tr><th>رقم</th><th>الشركة</th><th>الهاتف</th><th>الحوالات</th><th>عمولات</th><th></th></tr></thead><tbody>${companyRows()}</tbody></table></div></div>`}function companyRows(){const q=(document.getElementById('sq')?.value||'').toLowerCase();const arr=state.companies.filter(x=>(x.name+x.phone).toLowerCase().includes(q));if(!arr.length)return '<tr><td colspan="6" class="empty">لا توجد شركات</td></tr>';return arr.map(c=>{const ts=state.transfers.filter(t=>t.companyId===c.id);return `<tr><td>${c.id}</td><td><b>${c.name}</b></td><td>${c.phone||'-'}</td><td>${ts.length}</td><td>${money(ts.reduce((s,t)=>s+t.commission,0),'USD')}</td><td><button class="btn small secondary" onclick="showCompany('${c.id}')">عرض</button></td></tr>`}).join('')}
-function transfers(){document.getElementById('view').innerHTML=`<div class="card"><div class="section-head"><h2>💸 الحوالات</h2><button class="btn" onclick="openTransfer()">➕ ترحيل حوالة</button></div><div class="toolbar"><input id="tq" placeholder="🔍 رقم الحوالة أو العميل أو المستفيد" oninput="transfers()"></div><div class="tablewrap"><table class="table"><thead><tr><th>رقم</th><th>التاريخ</th><th>العميل</th><th>الشركة</th><th>المستفيد</th><th>المبلغ</th><th>العمولة</th><th>الحالة</th></tr></thead><tbody>${transferRows()}</tbody></table></div></div>`}function transferRows(){const q=(document.getElementById('tq')?.value||'').toLowerCase();const arr=state.transfers.filter(t=>(t.id+(customer(t.customerId)?.name||'')+t.beneficiary).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));if(!arr.length)return '<tr><td colspan="8" class="empty">لا توجد حوالات</td></tr>';return arr.map(t=>`<tr><td><button class="btn small secondary" onclick="showTransfer('${t.id}')">${t.id}</button></td><td>${t.date}</td><td>${customer(t.customerId)?.name||'-'}</td><td>${company(t.companyId)?.name||'-'}</td><td>${t.beneficiary}</td><td>${money(t.amount,t.currency)}</td><td>${money(t.commission,t.currency)}</td><td><span class="badge blue">تم الترحيل</span></td></tr>`).join('')}
-function payments(){document.getElementById('view').innerHTML=`<div class="card"><div class="section-head"><h2>💰 التسديدات</h2><button class="btn" onclick="openPayment()">➕ تسجيل حركة</button></div><div class="muted" style="margin-bottom:12px">اختر نوع الحركة: <b>عليه</b> إذا كان المبلغ على الحساب، أو <b>له</b> إذا كان المبلغ لصالح الحساب.</div><div class="tablewrap"><table class="table"><thead><tr><th>رقم الحركة</th><th>التاريخ</th><th>الحساب</th><th>النوع</th><th>المبلغ</th><th>ملاحظات</th></tr></thead><tbody>${state.payments.length?state.payments.slice().reverse().map(p=>`<tr><td>${p.id}</td><td>${p.date}</td><td>${customer(p.customerId)?.name||company(p.companyId)?.name||'-'}</td><td><span class="badge ${p.direction==='له'?'green':'orange'}">${p.direction||'عليه'}</span></td><td>${money(p.amount,p.currency)}</td><td>${p.notes||'-'}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">لا توجد تسديدات</td></tr>'}</tbody></table></div></div>`}function clears(){document.getElementById('view').innerHTML=`<div class="card"><div class="section-head"><h2>🔄 المقاصة بين شركة وعميل</h2><button class="btn" onclick="openClear()">➕ تسجيل مقاصة</button></div><div class="toolbar"><span class="badge blue">🏢 → 👤 شركة إلى عميل</span><span class="badge orange">👤 → 🏢 عميل إلى شركة</span></div><div class="tablewrap"><table class="table"><thead><tr><th>رقم المقاصة</th><th>التاريخ</th><th>الاتجاه</th><th>الشركة</th><th>العميل</th><th>المبلغ</th></tr></thead><tbody>${state.clears.length?state.clears.slice().reverse().map(c=>`<tr><td>${c.id}</td><td>${c.date}</td><td><span class="badge ${c.direction==='شركة إلى عميل'?'blue':'orange'}">${c.direction}</span></td><td>${company(c.companyId)?.name||'-'}</td><td>${customer(c.customerId)?.name||'-'}</td><td>${money(c.amount,c.currency)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">لا توجد مقاصات</td></tr>'}</tbody></table></div></div>`}function statements(){document.getElementById('view').innerHTML=`<div class="card"><div class="section-head"><h2>📊 كشف الحساب</h2><button class="btn secondary" onclick="openPayment()">💰 تسجيل تسديد</button></div><div class="toolbar"><select id="stType" onchange="statementForm()"><option value="customer">👤 عميل</option><option value="company">🏢 شركة</option></select><select id="stId"></select><select id="stCur"><option value="USD">USD</option><option value="IQD">IQD</option></select><input type="date" id="stFrom"><input type="date" id="stTo"><button class="btn" onclick="showStatement()">🔎 عرض الكشف</button></div><div id="statementResult"></div></div>`;statementForm()}function statementForm(){const type=document.getElementById('stType').value,sel=document.getElementById('stId');const arr=type==='customer'?state.customers:state.companies;sel.innerHTML=arr.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}
-function showStatement(){const type=document.getElementById('stType').value,idv=document.getElementById('stId').value,cur=document.getElementById('stCur').value,from=document.getElementById('stFrom').value,to=document.getElementById('stTo').value;let rows=[];if(type==='customer'){state.transfers.filter(t=>t.customerId===idv&&t.currency===cur).forEach(t=>rows.push({date:t.date,debit:t.total,credit:0}));state.payments.filter(p=>p.customerId===idv&&p.currency===cur).forEach(p=>rows.push({date:p.date,debit:p.direction==='له'?0:p.amount,credit:p.direction==='له'?p.amount:0}));state.clears.filter(c=>c.customerId===idv&&c.currency===cur).forEach(c=>rows.push({date:c.date,debit:c.direction==='شركة إلى عميل'?0:c.amount,credit:c.direction==='شركة إلى عميل'?c.amount:0}));}else{state.transfers.filter(t=>t.companyId===idv&&t.currency===cur).forEach(t=>rows.push({date:t.date,debit:t.amount,credit:0}));state.clears.filter(c=>c.companyId===idv&&c.currency===cur).forEach(c=>rows.push({date:c.date,debit:c.direction==='شركة إلى عميل'?c.amount:0,credit:c.direction==='شركة إلى عميل'?0:c.amount}));state.payments.filter(p=>p.companyId===idv&&p.currency===cur).forEach(p=>rows.push({date:p.date,debit:p.direction==='له'?0:p.amount,credit:p.direction==='له'?p.amount:0}));}rows=rows.filter(r=>(!from||r.date>=from)&&(!to||r.date<=to)).sort((a,b)=>a.date.localeCompare(b.date));let bal=0;rows=rows.map(r=>{bal+=r.debit-r.credit;return {...r,bal}});document.getElementById('statementResult').innerHTML=`<div class="section-head"><h3>${type==='customer'?'👤':'🏢'} ${type==='customer'?customer(idv)?.name:company(idv)?.name} — ${cur}</h3></div><div class="tablewrap"><table class="table"><thead><tr><th>التاريخ</th><th>عليه</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr><td>${r.date}</td><td>${r.debit?money(r.debit,cur):'-'}</td><td>${r.credit?money(r.credit,cur):'-'}</td><td>${money(r.bal,cur)}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">لا توجد حركات في الفترة المحددة</td></tr>'}</tbody></table></div><div class="card" style="margin-top:12px"><b>الرصيد النهائي:</b> ${money(bal,cur)}</div>`}function reports(){const sum=(arr,k)=>arr.reduce((s,x)=>s+Number(x[k]||0),0),usdT=state.transfers.filter(t=>t.currency==='USD'),iqdT=state.transfers.filter(t=>t.currency==='IQD'),usdPaid=state.payments.filter(p=>p.currency==='USD').reduce((s,p)=>s+(p.direction==='له'?-p.amount:p.amount),0),iqdPaid=state.payments.filter(p=>p.currency==='IQD').reduce((s,p)=>s+(p.direction==='له'?-p.amount:p.amount),0);document.getElementById('view').innerHTML=`<div class="section-head"><h2>📈 التقارير</h2></div><div class="grid"><div class="card stat"><div class="label">💸 عدد الحوالات</div><div class="num">${state.transfers.length}</div></div><div class="card stat"><div class="label">💵 حوالات USD</div><div class="num">${money(sum(usdT,'amount'),'USD')}</div></div><div class="card stat"><div class="label">🇮🇶 حوالات IQD</div><div class="num">${money(sum(iqdT,'amount'),'IQD')}</div></div><div class="card stat"><div class="label">💰 إجمالي العمولات</div><div class="num">USD ${sum(usdT,'commission').toLocaleString('en-US',{maximumFractionDigits:2})} / IQD ${sum(iqdT,'commission').toLocaleString('en-US',{maximumFractionDigits:0})}</div></div></div><div class="section card"><h2>💳 التسديدات والحركات</h2><p>صافي حركات USD: <b>${money(usdPaid,'USD')}</b></p><p>صافي حركات IQD: <b>${money(iqdPaid,'IQD')}</b></p><p>الحوالات المتأخرة 15+ يوم: <b>${state.transfers.filter(t=>Math.floor((Date.now()-new Date(t.date))/86400000)>=15).length}</b></p><p>الحوالات المتأخرة 30+ يوم: <b>${state.transfers.filter(t=>Math.floor((Date.now()-new Date(t.date))/86400000)>=30).length}</b></p></div><div class="section card"><h2>📊 أرصدة العملاء والشركات</h2><div class="tablewrap"><table class="table"><thead><tr><th>النوع</th><th>الاسم</th><th>USD</th><th>IQD</th></tr></thead><tbody>${state.customers.map(c=>{const b=balanceCustomer(c.id);return `<tr><td>عميل</td><td>${c.name}</td><td>${money(b.USD,'USD')}</td><td>${money(b.IQD,'IQD')}</td></tr>`}).join('')}${state.companies.map(c=>{const b=balanceCompany(c.id);return `<tr><td>شركة</td><td>${c.name}</td><td>${money(b.USD,'USD')}</td><td>${money(b.IQD,'IQD')}</td></tr>`}).join('')}</tbody></table></div></div>`}function alerts(){document.getElementById('view').innerHTML=`<div class="card"><h2>🔔 التنبيهات</h2>${lateRows()}</div>`}function settings(){const cfg=state.settings.sync||{enabled:false,url:'',token:'',key:'main',updatedAt:0};document.getElementById('view').innerHTML=`<div class="card"><h2>⚙️ الإعدادات</h2><div class="form"><label>اسم المكتب<input id="office" value="${state.settings.office||''}"></label><label>تنبيه أول<input value="15 يوم" disabled></label><label>تنبيه ثاني<input value="30 يوم" disabled></label></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>☁️ المزامنة السحابية</h3><p class="muted">اربط الحاسبة والموبايل بنفس خادم المزامنة. استخدم نفس الرابط والرمز ومعرّف الحساب على الجهازين.</p><div class="form"><label class="full">تفعيل المزامنة<select id="syncEnabled"><option value="0" ${!cfg.enabled?'selected':''}>غير مفعلة</option><option value="1" ${cfg.enabled?'selected':''}>مفعلة</option></select></label><label class="full">رابط خادم المزامنة<input id="syncUrl" placeholder="https://your-server.example.com" value="${cfg.url||''}"></label><label>رمز المزامنة<input id="syncToken" type="password" placeholder="رمز سري" value="${cfg.token||''}"></label><label>معرّف الحساب<input id="syncKey" value="${cfg.key||'main'}"></label></div><div class="actions"><button class="btn" onclick="saveSettings()">💾 حفظ الإعدادات</button><button class="btn secondary" onclick="syncTest()">🔌 اختبار الاتصال</button><button class="btn ok" onclick="syncPush()">☁️ رفع البيانات</button><button class="btn secondary" onclick="syncPull()">⬇️ جلب البيانات</button><button class="btn secondary" onclick="backup()">⬇️ نسخة احتياطية</button><button class="btn secondary" onclick="document.getElementById('restore').click()">⬆️ استعادة</button><input id="restore" type="file" accept="application/json" hidden onchange="restore(this)"></div><p class="muted">هذا النظام لمستخدم واحد. لا تشارك رمز المزامنة مع الآخرين.</p></div>`}function saveSettings(){state.settings.office=document.getElementById('office').value;state.settings.sync={enabled:document.getElementById('syncEnabled').value==='1',url:document.getElementById('syncUrl').value.trim(),token:document.getElementById('syncToken').value,key:document.getElementById('syncKey').value.trim()||'main',updatedAt:Date.now()};localStorage.setItem(KEY,JSON.stringify(state));document.getElementById('sync').textContent=state.settings.sync.enabled?'☁️ المزامنة مفعلة':'☁️ محفوظ على هذا الجهاز';if(state.settings.sync.enabled)syncPush();alert('تم حفظ الإعدادات')}
-function openCustomer(cid){const c=cid?customer(cid):null;editId=cid||null;modal(`<h2>${c?'✏️ تعديل عميل':'➕ إضافة عميل'}</h2><div class="form"><label>اسم العميل*<input id="cn" value="${c?.name||''}"></label><label>الهاتف<input id="cp" value="${c?.phone||''}"></label><label>واتساب<input id="cw" value="${c?.whatsapp||''}"></label><label>العنوان<input id="ca" value="${c?.address||''}"></label><label class="full">ملاحظات<textarea id="cm">${c?.notes||''}</textarea></label></div><div class="actions"><button class="btn ok" onclick="saveCustomer()">💾 ${c?'حفظ التعديل':'حفظ العميل'}</button></div>`)}function saveCustomer(){const name=document.getElementById('cn').value.trim();if(!name)return alert('اسم العميل مطلوب');if(editId){const c=customer(editId);c.name=name;c.phone=document.getElementById('cp').value;c.whatsapp=document.getElementById('cw').value;c.address=document.getElementById('ca').value;c.notes=document.getElementById('cm').value}else{state.customers.push({id:id('CUS-',state.customers),name,phone:document.getElementById('cp').value,whatsapp:document.getElementById('cw').value,address:document.getElementById('ca').value,notes:document.getElementById('cm').value})}save();closeModal();render()}function addCustomer(){const name=document.getElementById('cn').value.trim();if(!name)return alert('اسم العميل مطلوب');state.customers.push({id:id('CUS-',state.customers),name,phone:document.getElementById('cp').value,whatsapp:document.getElementById('cw').value,address:document.getElementById('ca').value,notes:document.getElementById('cm').value});save();closeModal();render()}
-function openCompany(){modal(`<h2>➕ إضافة شركة</h2><div class="form"><label>اسم الشركة*<input id="co"></label><label>الهاتف<input id="cop"></label><label>واتساب<input id="cow"></label><label>الدولة<input id="coc"></label><label class="full">العنوان<textarea id="coa"></textarea></label></div><div class="actions"><button class="btn ok" onclick="addCompany()">حفظ الشركة</button></div>`)}function addCompany(){const name=document.getElementById('co').value.trim();if(!name)return alert('اسم الشركة مطلوب');state.companies.push({id:id('COM-',state.companies),name,phone:document.getElementById('cop').value,whatsapp:document.getElementById('cow').value,country:document.getElementById('coc').value,address:document.getElementById('coa').value});save();closeModal();render()}
-function openTransfer(){if(!state.customers.length||!state.companies.length)return alert('أضف عميلاً وشركة أولاً');modal(`<h2>💸 حوالة جديدة</h2><div class="form"><label>العميل*<select id="trc">${state.customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></label><label>الشركة*<select id="tro">${state.companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></label><label>المستفيد*<input id="trb"></label><label>التاريخ<input type="date" id="trd" value="${new Date().toISOString().slice(0,10)}"></label><label>المبلغ*<input type="number" step="0.01" id="tra"></label><label>العملة<select id="trcur"><option>USD</option><option>IQD</option></select></label><label>العمولة<input type="number" step="0.01" id="trcomm" value="0"></label><label>مرجع الشركة<input id="trref"></label><label class="full">ملاحظات<textarea id="trnote"></textarea></label></div><div class="card" style="margin-top:12px">الإجمالي على العميل: <b id="trtotal">0</b></div><div class="actions"><button class="btn ok" onclick="addTransfer()">🟢 ترحيل الحوالة</button></div>`);document.getElementById('tra').oninput=calcTotal;document.getElementById('trcomm').oninput=calcTotal;document.getElementById('trcur').onchange=calcTotal}function calcTotal(){const a=+document.getElementById('tra').value||0,c=+document.getElementById('trcomm').value||0,cur=document.getElementById('trcur').value;document.getElementById('trtotal').textContent=money(a+c,cur)}function addTransfer(){const amount=+document.getElementById('tra').value||0,commission=+document.getElementById('trcomm').value||0;if(amount<=0||!document.getElementById('trb').value.trim())return alert('أدخل المبلغ واسم المستفيد');const t={id:id('TR-',state.transfers),customerId:document.getElementById('trc').value,companyId:document.getElementById('tro').value,beneficiary:document.getElementById('trb').value.trim(),date:document.getElementById('trd').value,amount,commission,total:amount+commission,paid:0,currency:document.getElementById('trcur').value,ref:document.getElementById('trref').value,notes:document.getElementById('trnote').value};state.transfers.push(t);save();closeModal();render();showTransfer(t.id)}
-function openPayment(){const people=[...state.customers.map(c=>({id:c.id,type:'customer',name:'👤 '+c.name})),...state.companies.map(c=>({id:c.id,type:'company',name:'🏢 '+c.name}))];if(!people.length)return alert('أضف عميلاً أو شركة أولاً');modal(`<h2>💰 تسجيل تسديد / حركة</h2><div class="form"><label>الحساب*<select id="pperson">${people.map(x=>`<option value="${x.type}|${x.id}">${x.name}</option>`).join('')}</select></label><label>نوع الحركة*<select id="pdir"><option value="عليه">عليه</option><option value="له">له</option></select></label><label>التاريخ<input type="date" id="pd" value="${new Date().toISOString().slice(0,10)}"></label><label>المبلغ*<input type="number" step="0.01" id="pa"></label><label>العملة<select id="pcurrency"><option>USD</option><option>IQD</option></select></label><label class="full">ملاحظات<textarea id="pn"></textarea></label></div><div class="actions"><button class="btn ok" onclick="addPayment()">🟢 حفظ الحركة</button></div>`)}function addPayment(){const [type,personId]=document.getElementById('pperson').value.split('|'),amount=+document.getElementById('pa').value||0;if(amount<=0)return alert('أدخل مبلغاً صحيحاً');const p={id:id('PAY-',state.payments),customerId:type==='customer'?personId:null,companyId:type==='company'?personId:null,direction:document.getElementById('pdir').value,date:document.getElementById('pd').value,amount,currency:document.getElementById('pcurrency').value,notes:document.getElementById('pn').value};state.payments.push(p);save();closeModal();render()}
-function openClear(){if(!state.customers.length||!state.companies.length)return alert('أضف عميلاً وشركة أولاً');modal(`<h2>🔄 مقاصة بين شركة وعميل</h2><div class="form"><label>اتجاه المقاصة*<select id="cldir"><option value="شركة إلى عميل">🏢 الشركة → 👤 العميل</option><option value="عميل إلى شركة">👤 العميل → 🏢 الشركة</option></select></label><label>الشركة<select id="clo">${state.companies.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></label><label>العميل<select id="clc">${state.customers.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></label><label>المبلغ<input type="number" step="0.01" id="cla"></label><label>العملة<select id="clcur"><option>USD</option><option>IQD</option></select></label><label>التاريخ<input type="date" id="cld" value="${new Date().toISOString().slice(0,10)}"></label><label class="full">ملاحظات<textarea id="cln"></textarea></label></div><div class="actions"><button class="btn ok" onclick="addClear()">🟢 ترحيل المقاصة</button></div>`)}function addClear(){const a=+document.getElementById('cla').value||0;if(a<=0)return alert('أدخل المبلغ');state.clears.push({id:id('CLR-',state.clears),direction:document.getElementById('cldir').value,companyId:document.getElementById('clo').value,customerId:document.getElementById('clc').value,amount:a,currency:document.getElementById('clcur').value,date:document.getElementById('cld').value,notes:document.getElementById('cln').value});save();closeModal();render()}
-function showTransfer(tid){const t=transfer(tid);modal(`<h2>💸 تفاصيل ${t.id}</h2><div class="card"><p><b>العميل:</b> ${customer(t.customerId)?.name}</p><p><b>الشركة:</b> ${company(t.companyId)?.name}</p><p><b>المستفيد:</b> ${t.beneficiary}</p><p><b>المبلغ:</b> ${money(t.amount,t.currency)}</p><p><b>العمولة:</b> ${money(t.commission,t.currency)}</p><p><b>الإجمالي على العميل:</b> ${money(t.total,t.currency)}</p><p><b>التاريخ:</b> ${t.date}</p></div><div class="actions"><button class="btn secondary" onclick="closeModal()">إغلاق</button></div>`)}function showCustomer(cid){const c=customer(cid),b=balanceCustomer(cid);modal(`<h2>👤 ${c.name}</h2><p>📞 ${c.phone||'-'}</p><div class="grid"><div class="card"><b>USD</b><div class="stat"><div class="num">${money(b.USD,'USD')}</div></div></div><div class="card"><b>IQD</b><div class="stat"><div class="num">${money(b.IQD,'IQD')}</div></div></div></div><div class="actions"><button class="btn" onclick="closeModal();openTransfer();setTimeout(()=>document.getElementById('trc').value='${cid}',50)">➕ حوالة</button><button class="btn secondary" onclick="closeModal();openPayment();setTimeout(()=>document.getElementById('pperson').value='customer|${cid}',50)">💰 تسديد</button><button class="btn secondary" onclick="closeModal();setPage('statements');setTimeout(()=>{document.getElementById('stType').value='customer';statementForm();document.getElementById('stId').value='${cid}'},30)">📊 كشف حساب</button><button class="btn secondary" onclick="closeModal();openCustomer('${cid}')">✏️ تعديل</button></div>`)}function showCompany(cid){const c=company(cid),ts=state.transfers.filter(t=>t.companyId===cid);modal(`<h2>🏢 ${c.name}</h2><p>${c.phone||''}</p><div class="card"><b>عدد الحوالات:</b> ${ts.length}<br><b>إجمالي العمولات:</b> ${money(ts.reduce((s,t)=>s+t.commission,0),'USD')}</div><div class="actions"><button class="btn" onclick="closeModal();openTransfer();setTimeout(()=>document.getElementById('tro').value='${cid}',50)">➕ حوالة</button><button class="btn secondary" onclick="closeModal();setPage('statements')">📊 كشف</button></div>`)}function modal(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show')}function closeModal(){document.getElementById('modal').classList.remove('show')}function backup(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='remittance-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}function restore(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.customers||!x.companies||!x.transfers)throw Error();Object.assign(state,x);save();render();alert('تمت الاستعادة')}catch(e){alert('ملف النسخة الاحتياطية غير صالح')}};r.readAsText(f)}render();if(state.settings.sync&&state.settings.sync.enabled){setTimeout(()=>syncPull(),500)}
-</script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f3d5e">
+<title>نظام الحوالات</title>
+
+<style>
+:root{
+ --nav:#0f3d5e;
+ --bg:#f4f7fa;
+ --card:#fff;
+ --text:#183247;
+ --muted:#718096;
+ --line:#dbe4ec;
+ --ok:#15803d;
+ --bad:#b91c1c;
+}
+
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ font-family:Tahoma,Arial,sans-serif;
+ background:var(--bg);
+ color:var(--text);
+}
+
+button,input,select,textarea{
+ font:inherit;
+}
+
+button{
+ cursor:pointer;
+}
+
+.app{
+ display:flex;
+ min-height:100vh;
+}
+
+.side{
+ width:245px;
+ background:linear-gradient(180deg,var(--nav),#092b42);
+ color:#fff;
+ padding:20px 14px;
+ position:fixed;
+ top:0;
+ bottom:0;
+ right:0;
+ z-index:5;
+}
+
+.brand{
+ font-size:21px;
+ font-weight:800;
+ padding:10px 8px 22px;
+}
+
+.nav button{
+ width:100%;
+ border:0;
+ background:transparent;
+ color:#dcecf6;
+ text-align:right;
+ padding:13px 12px;
+ border-radius:10px;
+ margin:2px 0;
+}
+
+.nav button.active,
+.nav button:hover{
+ background:rgba(255,255,255,.12);
+ color:#fff;
+}
+
+.main{
+ margin-right:245px;
+ width:calc(100% - 245px);
+ padding:22px;
+ max-width:1600px;
+}
+
+.top{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:15px;
+ margin-bottom:18px;
+}
+
+.title h1{
+ margin:0 0 4px;
+ font-size:26px;
+}
+
+.muted{
+ color:var(--muted);
+ font-size:13px;
+}
+
+.sync{
+ background:#fff;
+ border:1px solid var(--line);
+ padding:9px 12px;
+ border-radius:10px;
+ font-size:13px;
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:14px;
+}
+
+.card{
+ background:var(--card);
+ border:1px solid var(--line);
+ border-radius:15px;
+ padding:17px;
+ box-shadow:0 4px 14px rgba(17,44,67,.05);
+}
+
+.stat .num{
+ font-size:25px;
+ font-weight:800;
+ margin-top:8px;
+}
+
+.stat .label{
+ color:var(--muted);
+ font-size:13px;
+}
+
+.section{
+ margin-top:18px;
+}
+
+.section-head{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:10px;
+}
+
+.section-head h2{
+ font-size:18px;
+ margin:0;
+}
+
+.btn{
+ border:0;
+ border-radius:10px;
+ padding:10px 14px;
+ background:var(--nav);
+ color:#fff;
+}
+
+.btn.secondary{
+ background:#e8eef3;
+ color:var(--text);
+}
+
+.btn.ok{
+ background:var(--ok);
+}
+
+.btn.danger{
+ background:var(--bad);
+}
+
+.btn.small{
+ padding:7px 10px;
+ font-size:12px;
+}
+
+.toolbar{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-bottom:12px;
+}
+
+.toolbar input,
+.toolbar select,
+.form input,
+.form select,
+.form textarea{
+ width:100%;
+ background:#fff;
+ border:1px solid var(--line);
+ border-radius:9px;
+ padding:10px;
+ outline:none;
+}
+
+.toolbar input{
+ min-width:220px;
+ width:auto;
+}
+
+.tablewrap{
+ overflow:auto;
+}
+
+.table{
+ width:100%;
+ border-collapse:collapse;
+ background:#fff;
+}
+
+.table th,
+.table td{
+ padding:11px 9px;
+ border-bottom:1px solid var(--line);
+ white-space:nowrap;
+ text-align:right;
+}
+
+.table th{
+ background:#f8fafc;
+ font-size:13px;
+}
+
+.empty{
+ text-align:center;
+ color:var(--muted);
+ padding:30px;
+}
+
+.form{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:12px;
+}
+
+.form .full{
+ grid-column:1/-1;
+}
+
+.form label{
+ display:flex;
+ flex-direction:column;
+ gap:6px;
+ font-size:13px;
+ font-weight:700;
+}
+
+.form textarea{
+ min-height:90px;
+ resize:vertical;
+}
+
+.actions{
+ display:flex;
+ gap:8px;
+ flex-wrap:wrap;
+ margin-top:15px;
+}
+
+.modal{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.45);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ padding:18px;
+ z-index:20;
+}
+
+.modal.show{
+ display:flex;
+}
+
+.modalbox{
+ background:#fff;
+ width:min(760px,100%);
+ max-height:90vh;
+ overflow:auto;
+ border-radius:16px;
+ padding:20px;
+}
+
+.close{
+ float:left;
+ border:0;
+ background:#eef2f6;
+ border-radius:8px;
+ padding:5px 9px;
+}
+
+.mobilebar{
+ display:none;
+}
+
+.badge{
+ display:inline-block;
+ padding:5px 8px;
+ border-radius:8px;
+ background:#eef2f6;
+ font-size:12px;
+}
+
+.badge.ok{
+ background:#dcfce7;
+ color:#166534;
+}
+
+.badge.bad{
+ background:#fee2e2;
+ color:#991b1b;
+}
+
+hr{
+ border:0;
+ border-top:1px solid var(--line);
+ margin:20px 0;
+}
+
+@media(max-width:900px){
+
+ .side{
+  display:none;
+ }
+
+ .main{
+  margin:0;
+  width:100%;
+  padding:14px;
+  padding-bottom:90px;
+ }
+
+ .grid{
+  grid-template-columns:repeat(2,1fr);
+ }
+
+ .form{
+  grid-template-columns:1fr;
+ }
+
+ .form .full{
+  grid-column:auto;
+ }
+
+ .mobilebar{
+  display:flex;
+  position:fixed;
+  bottom:0;
+  right:0;
+  left:0;
+  background:#fff;
+  border-top:1px solid var(--line);
+  z-index:10;
+  overflow-x:auto;
+ }
+
+ .mobilebar button{
+  flex:1 0 16.666%;
+  min-width:68px;
+  border:0;
+  background:#fff;
+  padding:7px 3px 9px;
+  font-size:11px;
+  color:var(--text);
+ }
+
+ .mobilebar button.active{
+  color:var(--nav);
+  font-weight:800;
+ }
+
+ .top{
+  align-items:flex-start;
+ }
+
+ .title h1{
+  font-size:21px;
+ }
+
+}
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="side">
+
+<div class="brand">
+💰 نظام الحوالات
+</div>
+
+<div class="nav" id="nav"></div>
+
+</aside>
+
+<main class="main">
+
+<div class="top">
+
+<div class="title">
+
+<h1 id="pageTitle">الرئيسية</h1>
+
+<div class="muted">
+إدارة العملاء والشركات والحوالات والتسديدات
+</div>
+
+</div>
+
+<div class="sync" id="sync">
+🔐 غير مسجل
+</div>
+
+</div>
+
+<div id="view"></div>
+
+</main>
+
+</div>
+
+<div class="mobilebar" id="mobilebar"></div>
+
+<div class="modal" id="modal">
+
+<div class="modalbox">
+
+<button class="close" onclick="closeModal()">✕</button>
+
+<div id="modalBody"></div>
+
+</div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   FIREBASE CONFIG
+   ===================================================== */
+
+const firebaseConfig = {
+
+ apiKey: "ضع_API_KEY_هنا",
+
+ authDomain: "remittance-system-f14e0.firebaseapp.com",
+
+ projectId: "remittance-system-f14e0",
+
+ storageBucket: "remittance-system-f14e0.firebasestorage.app",
+
+ messagingSenderId: "80599079461",
+
+ appId: "1:80599079461:web:433f5892cb3bad29e2fdcc"
+
+};
+
+
+/* =====================================================
+   FIREBASE
+   ===================================================== */
+
+let firebaseReady = false;
+let db = null;
+let auth = null;
+let remoteUnsub = null;
+let applyingRemote = false;
+let savingRemote = false;
+
+try{
+
+ firebase.initializeApp(firebaseConfig);
+
+ db = firebase.firestore();
+
+ auth = firebase.auth();
+
+ firebaseReady = true;
+
+}catch(e){
+
+ console.error(e);
+
+}
+
+
+/* =====================================================
+   DATA
+   ===================================================== */
+
+const KEY = "remit_app_v3";
+
+const DEFAULT_STATE = {
+
+ customers: [],
+
+ companies: [],
+
+ transfers: [],
+
+ payments: [],
+
+ clears: [],
+
+ settings: {
+
+  office:"نظام الحوالات",
+
+  updatedAt:0
+
+ }
+
+};
+
+let state =
+ JSON.parse(localStorage.getItem(KEY) || "null")
+ ||
+ JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+state.customers = state.customers || [];
+state.companies = state.companies || [];
+state.transfers = state.transfers || [];
+state.payments = state.payments || [];
+state.clears = state.clears || [];
+state.settings = state.settings || {};
+
+state.settings.office =
+ state.settings.office || "نظام الحوالات";
+
+state.settings.updatedAt =
+ Number(state.settings.updatedAt || 0);
+
+let page = "dashboard";
+let editId = null;
+
+
+/* =====================================================
+   NAVIGATION
+   ===================================================== */
+
+const navs = [
+
+ ["dashboard","🏠","الرئيسية"],
+
+ ["customers","👤","العملاء"],
+
+ ["companies","🏢","الشركات"],
+
+ ["transfers","💸","الحوالات"],
+
+ ["statements","📊","كشف الحساب"],
+
+ ["payments","💰","التسديدات"],
+
+ ["clears","🔄","المقاصة"],
+
+ ["reports","📈","التقارير"],
+
+ ["alerts","🔔","التنبيهات"],
+
+ ["settings","⚙️","الإعدادات"]
+
+];
+
+function setPage(p){
+
+ page = p;
+
+ render();
+
+}
+
+function renderNav(){
+
+ document.getElementById("nav").innerHTML =
+ navs.map(n => `
+
+ <button
+ class="${page === n[0] ? "active" : ""}"
+ onclick="setPage('${n[0]}')">
+
+ ${n[1]} ${n[2]}
+
+ </button>
+
+ `).join("");
+
+ document.getElementById("mobilebar").innerHTML =
+ navs.slice(0,6).map(n => `
+
+ <button
+ class="${page === n[0] ? "active" : ""}"
+ onclick="setPage('${n[0]}')">
+
+ ${n[1]}<br>${n[2]}
+
+ </button>
+
+ `).join("");
+
+}
+
+function render(){
+
+ renderNav();
+
+ const current =
+  navs.find(n => n[0] === page);
+
+ document.getElementById("pageTitle").textContent =
+  current ? current[2] : "الرئيسية";
+
+ switch(page){
+
+  case "dashboard":
+   dashboard();
+   break;
+
+  case "customers":
+   customers();
+   break;
+
+  case "companies":
+   companies();
+   break;
+
+  case "transfers":
+   transfers();
+   break;
+
+  case "statements":
+   statements();
+   break;
+
+  case "payments":
+   payments();
+   break;
+
+  case "clears":
+   clears();
+   break;
+
+  case "reports":
+   reports();
+   break;
+
+  case "alerts":
+   alerts();
+   break;
+
+  case "settings":
+   settings();
+   break;
+
+  default:
+   dashboard();
+
+ }
+
+}
+
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+
+function money(value,currency){
+
+ const n = Number(value || 0);
+
+ return n.toLocaleString(
+  "en-US",
+  {
+   minimumFractionDigits:
+    currency === "IQD" ? 0 : 2,
+
+   maximumFractionDigits:
+    currency === "IQD" ? 0 : 2
+  }
+ ) + " " + (currency || "");
+
+}
+
+function nextId(prefix,list){
+
+ return prefix +
+ String(list.length + 1).padStart(6,"0");
+
+}
+
+function customer(id){
+
+ return state.customers.find(
+  x => x.id === id
+ );
+
+}
+
+function company(id){
+
+ return state.companies.find(
+  x => x.id === id
+ );
+
+}
+
+
+/* =====================================================
+   SAVE
+   ===================================================== */
+
+function saveLocal(){
+
+ state.settings.updatedAt = Date.now();
+
+ localStorage.setItem(
+  KEY,
+  JSON.stringify(state)
+ );
+
+ const sync =
+  document.getElementById("sync");
+
+ if(sync && auth && auth.currentUser){
+
+  sync.textContent =
+   "☁️ جارٍ الحفظ...";
+
+ }else if(sync){
+
+  sync.textContent =
+   "💾 محفوظ محلياً";
+
+ }
+
+ if(!applyingRemote){
+
+  syncPush();
+
+ }
+
+}
+
+
+/* =====================================================
+   FIREBASE PUSH
+   ===================================================== */
+
+async function syncPush(){
+
+ if(
+  !firebaseReady ||
+  !auth ||
+  !auth.currentUser ||
+  !db ||
+  applyingRemote ||
+  savingRemote
+ ){
+
+  return;
+
+ }
+
+ savingRemote = true;
+
+ try{
+
+  await db
+   .collection("users")
+   .doc(auth.currentUser.uid)
+   .set({
+
+    updatedAt:
+     Number(
+      state.settings.updatedAt ||
+      Date.now()
+     ),
+
+    data:
+     JSON.parse(
+      JSON.stringify(state)
+     )
+
+   });
+
+  const sync =
+   document.getElementById("sync");
+
+  if(sync){
+
+   sync.textContent =
+    "☁️ تمت المزامنة";
+
+  }
+
+ }catch(e){
+
+  console.error(e);
+
+  const sync =
+   document.getElementById("sync");
+
+  if(sync){
+
+   sync.textContent =
+    "⚠️ تعذر الحفظ السحابي";
+
+  }
+
+ }finally{
+
+  savingRemote = false;
+
+ }
+
+}
+
+
+/* =====================================================
+   FIREBASE REALTIME
+   ===================================================== */
+
+function startCloudSync(){
+
+ if(!firebaseReady || !auth || !db){
+
+  return;
+
+ }
+
+ auth.onAuthStateChanged(async user => {
+
+  if(remoteUnsub){
+
+   remoteUnsub();
+
+   remoteUnsub = null;
+
+  }
+
+  const sync =
+   document.getElementById("sync");
+
+  if(!user){
+
+   if(sync){
+
+    sync.textContent =
+     "🔐 غير مسجل";
+
+   }
+
+   return;
+
+  }
+
+  if(sync){
+
+   sync.textContent =
+    "☁️ الاتصال بالسحابة...";
+
+  }
+
+  const ref =
+   db.collection("users")
+   .doc(user.uid);
+
+  remoteUnsub = ref.onSnapshot(
+
+   async snap => {
+
+    if(!snap.exists){
+
+     await syncPush();
+
+     return;
+
+    }
+
+    const remote =
+     snap.data() || {};
+
+    const remoteTime =
+     Number(remote.updatedAt || 0);
+
+    const localTime =
+     Number(
+      state.settings.updatedAt || 0
+     );
+
+    if(remote.data && remoteTime > localTime){
+
+     applyingRemote = true;
+
+     state = remote.data;
+
+     state.customers =
+      state.customers || [];
+
+     state.companies =
+      state.companies || [];
+
+     state.transfers =
+      state.transfers || [];
+
+     state.payments =
+      state.payments || [];
+
+     state.clears =
+      state.clears || [];
+
+     state.settings =
+      state.settings || {};
+
+     state.settings.office =
+      state.settings.office ||
+      "نظام الحوالات";
+
+     state.settings.updatedAt =
+      remoteTime;
+
+     localStorage.setItem(
+      KEY,
+      JSON.stringify(state)
+     );
+
+     render();
+
+     applyingRemote = false;
+
+     if(sync){
+
+      sync.textContent =
+       "☁️ تم تحديث البيانات من السحابة";
+
+     }
+
+    }else if(
+     remote.data &&
+     localTime > remoteTime
+    ){
+
+     await syncPush();
+
+    }else{
+
+     if(sync){
+
+      sync.textContent =
+       "☁️ متزامن";
+
+     }
+
+    }
+
+   },
+
+   error => {
+
+    console.error(error);
+
+    if(sync){
+
+     sync.textContent =
+      "⚠️ خطأ في الاتصال بالسحابة";
+
+    }
+
+   }
+
+  );
+
+ });
+
+}
+
+
+/* =====================================================
+   LOGIN
+   ===================================================== */
+
+async function loginFirebase(){
+
+ if(!firebaseReady){
+
+  alert(
+   "Firebase غير مهيأ. ضع apiKey الصحيح أولاً."
+  );
+
+  return;
+
+ }
+
+ if(auth.currentUser){
+
+  alert(
+   "أنت مسجل الدخول بالفعل."
+  );
+
+  return;
+
+ }
+
+ const email =
+  prompt(
+   "أدخل بريد مستخدم Firebase:"
+  );
+
+ if(!email){
+
+  return;
+
+ }
+
+ const password =
+  prompt(
+   "أدخل كلمة مرور Firebase:"
+  );
+
+ if(!password){
+
+  return;
+
+ }
+
+ try{
+
+  await auth.signInWithEmailAndPassword(
+   email.trim(),
+   password
+  );
+
+  alert(
+   "✅ تم تسجيل الدخول بنجاح"
+  );
+
+  render();
+
+ }catch(e){
+
+  alert(
+   "❌ فشل تسجيل الدخول:\n" +
+   e.message
+  );
+
+ }
+
+}
+
+
+/* =====================================================
+   LOGOUT
+   ===================================================== */
+
+async function logoutFirebase(){
+
+ if(!auth || !auth.currentUser){
+
+  alert(
+   "لا يوجد حساب مسجل الدخول."
+  );
+
+  return;
+
+ }
+
+ try{
+
+  await auth.signOut();
+
+  alert(
+   "تم تسجيل الخروج"
+  );
+
+  render();
+
+ }catch(e){
+
+  alert(e.message);
+
+ }
+
+}
+
+
+/* =====================================================
+   MANUAL SYNC
+   ===================================================== */
+
+async function syncNow(){
+
+ if(!auth || !auth.currentUser){
+
+  alert(
+   "🔐 سجّل الدخول إلى Firebase أولاً."
+  );
+
+  return;
+
+ }
+
+ await syncPush();
+
+ alert(
+  "☁️ تمت المزامنة"
+ );
+
+}
+
+
+/* =====================================================
+   BACKUP
+   ===================================================== */
+
+function backup(){
+
+ const blob =
+  new Blob(
+   [
+    JSON.stringify(
+     state,
+     null,
+     2
+    )
+   ],
+   {
+    type:"application/json"
+   }
+  );
+
+ const url =
+  URL.createObjectURL(blob);
+
+ const a =
+  document.createElement("a");
+
+ a.href = url;
+
+ a.download =
+  "remittance-backup.json";
+
+ a.click();
+
+ setTimeout(() => {
+
+  URL.revokeObjectURL(url);
+
+ },1000);
+
+}
+
+
+/* =====================================================
+   RESTORE
+   ===================================================== */
+
+function restore(input){
+
+ const file =
+  input.files &&
+  input.files[0];
+
+ if(!file){
+
+  return;
+
+ }
+
+ const reader =
+  new FileReader();
+
+ reader.onload = () => {
+
+  try{
+
+   const data =
+    JSON.parse(
+     reader.result
+    );
+
+   if(
+    !Array.isArray(data.customers) ||
+    !Array.isArray(data.companies) ||
+    !Array.isArray(data.transfers)
+   ){
+
+    throw new Error();
+
+   }
+
+   state = data;
+
+   state.payments =
+    state.payments || [];
+
+   state.clears =
+    state.clears || [];
+
+   state.settings =
+    state.settings || {};
+
+   state.settings.updatedAt =
+    Date.now();
+
+   localStorage.setItem(
+    KEY,
+    JSON.stringify(state)
+   );
+
+   saveLocal();
+
+   render();
+
+   alert(
+    "✅ تمت استعادة النسخة الاحتياطية"
+   );
+
+  }catch(e){
+
+   alert(
+    "❌ ملف النسخة الاحتياطية غير صالح"
+   );
+
+  }
+
+ };
+
+ reader.readAsText(file);
+
+}
+
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+function modal(html){
+
+ document.getElementById(
+  "modalBody"
+ ).innerHTML = html;
+
+ document.getElementById(
+  "modal"
+ ).classList.add("show");
+
+}
+
+function closeModal(){
+
+ document.getElementById(
+  "modal"
+ ).classList.remove("show");
+
+ editId = null;
+
+}
+
+
+/* =====================================================
+   DASHBOARD
+   ===================================================== */
+
+function dashboard(){
+
+ const today =
+  new Date()
+  .toISOString()
+  .slice(0,10);
+
+ const todayTransfers =
+  state.transfers.filter(
+   t => t.date === today
+  );
+
+ const totalToday =
+  todayTransfers.reduce(
+   (sum,t) =>
+    sum + Number(t.amount || 0),
+   0
+  );
+
+ const commissionToday =
+  todayTransfers.reduce(
+   (sum,t) =>
+    sum + Number(t.commission || 0),
+   0
+  );
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="grid">
+
+  <div class="card stat">
+
+   <div class="label">
+    👤 العملاء
+   </div>
+
+   <div class="num">
+    ${state.customers.length}
+   </div>
+
+  </div>
+
+  <div class="card stat">
+
+   <div class="label">
+    🏢 الشركات
+   </div>
+
+   <div class="num">
+    ${state.companies.length}
+   </div>
+
+  </div>
+
+  <div class="card stat">
+
+   <div class="label">
+    💸 حوالات اليوم
+   </div>
+
+   <div class="num">
+    ${todayTransfers.length}
+   </div>
+
+  </div>
+
+  <div class="card stat">
+
+   <div class="label">
+    💰 عمولات اليوم
+   </div>
+
+   <div class="num">
+    ${money(commissionToday,"USD")}
+   </div>
+
+  </div>
+
+ </div>
+
+ <div class="section card">
+
+  <div class="section-head">
+
+   <h2>
+    🚀 إجراءات سريعة
+   </h2>
+
+  </div>
+
+  <div class="actions">
+
+   <button
+   class="btn"
+   onclick="openTransfer()">
+
+   ➕ حوالة
+
+   </button>
+
+   <button
+   class="btn secondary"
+   onclick="openCustomer()">
+
+   👤 عميل
+
+   </button>
+
+   <button
+   class="btn secondary"
+   onclick="openCompany()">
+
+   🏢 شركة
+
+   </button>
+
+   <button
+   class="btn secondary"
+   onclick="setPage('statements')">
+
+   📊 كشف حساب
+
+   </button>
+
+  </div>
+
+ </div>
+
+ <div class="section card">
+
+  <h2>
+   📌 ملخص اليوم
+  </h2>
+
+  <p>
+   عدد الحوالات:
+   <b>${todayTransfers.length}</b>
+  </p>
+
+  <p>
+   إجمالي مبالغ اليوم:
+   <b>${money(totalToday,"USD")}</b>
+  </p>
+
+ </div>
+
+ <div class="section card">
+
+  <h2>
+   ⚠️ الحوالات المتأخرة
+  </h2>
+
+  ${lateRows()}
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   LATE TRANSFERS
+   ===================================================== */
+
+function lateRows(){
+
+ const now =
+  Date.now();
+
+ const rows =
+  state.transfers
+  .map(t => {
+
+   const d =
+    new Date(t.date).getTime();
+
+   const days =
+    Math.floor(
+     (now-d)/86400000
+    );
+
+   return {
+    ...t,
+    days
+   };
+
+  })
+  .filter(
+   t => t.days >= 15
+  )
+  .sort(
+   (a,b) => b.days-a.days
+  );
+
+ if(!rows.length){
+
+  return `
+   <div class="empty">
+    لا توجد حوالات متأخرة
+   </div>
+  `;
+
+ }
+
+ return `
+
+ <div class="tablewrap">
+
+ <table class="table">
+
+ <thead>
+
+ <tr>
+
+  <th>الرقم</th>
+  <th>التاريخ</th>
+  <th>العميل</th>
+  <th>الشركة</th>
+  <th>المبلغ</th>
+  <th>العمر</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${rows.slice(0,30).map(t => `
+
+ <tr>
+
+  <td>${t.id}</td>
+
+  <td>${t.date}</td>
+
+  <td>
+   ${customer(t.customerId)?.name || "-"}
+  </td>
+
+  <td>
+   ${company(t.companyId)?.name || "-"}
+  </td>
+
+  <td>
+   ${money(t.amount,t.currency)}
+  </td>
+
+  <td>
+   ${t.days} يوم
+  </td>
+
+ </tr>
+
+ `).join("")}
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   CUSTOMER BALANCE
+   ===================================================== */
+
+function balanceCustomer(cid){
+
+ const b = {
+  USD:0,
+  IQD:0
+ };
+
+ state.transfers
+ .filter(
+  t => t.customerId === cid
+ )
+ .forEach(t => {
+
+  b[t.currency] =
+   (b[t.currency] || 0) +
+   Number(
+    t.total ||
+    t.amount ||
+    0
+   );
+
+ });
+
+ state.payments
+ .filter(
+  p => p.customerId === cid
+ )
+ .forEach(p => {
+
+  if(p.direction === "له"){
+
+   b[p.currency] =
+    (b[p.currency] || 0) -
+    Number(p.amount || 0);
+
+  }else{
+
+   b[p.currency] =
+    (b[p.currency] || 0) +
+    Number(p.amount || 0);
+
+  }
+
+ });
+
+ state.clears
+ .filter(
+  c => c.customerId === cid
+ )
+ .forEach(c => {
+
+  if(
+   c.direction ===
+   "شركة إلى عميل"
+  ){
+
+   b[c.currency] =
+    (b[c.currency] || 0) -
+    Number(c.amount || 0);
+
+  }else{
+
+   b[c.currency] =
+    (b[c.currency] || 0) +
+    Number(c.amount || 0);
+
+  }
+
+ });
+
+ return b;
+
+}
+
+
+/* =====================================================
+   CUSTOMERS
+   ===================================================== */
+
+function customers(){
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="card">
+
+  <div class="section-head">
+
+   <h2>
+    👤 العملاء
+   </h2>
+
+   <button
+   class="btn"
+   onclick="openCustomer()">
+
+   ➕ إضافة عميل
+
+   </button>
+
+  </div>
+
+  <div class="toolbar">
+
+   <input
+   id="cq"
+   placeholder="🔍 البحث عن العميل"
+   oninput="customerTable()">
+
+  </div>
+
+  <div class="tablewrap">
+
+  <table class="table">
+
+  <thead>
+
+  <tr>
+
+   <th>الرقم</th>
+   <th>الاسم</th>
+   <th>الهاتف</th>
+   <th>USD</th>
+   <th>IQD</th>
+   <th>إجراء</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody id="customerBody"></tbody>
+
+  </table>
+
+  </div>
+
+ </div>
+
+ `;
+
+ customerTable();
+
+}
+
+function customerTable(){
+
+ const q =
+  (
+   document.getElementById("cq")?.value ||
+   ""
+  ).toLowerCase();
+
+ const arr =
+  state.customers.filter(c =>
+   (
+    c.name +
+    " " +
+    (c.phone || "")
+   )
+   .toLowerCase()
+   .includes(q)
+  );
+
+ const body =
+  document.getElementById(
+   "customerBody"
+  );
+
+ if(!body){
+
+  return;
+
+ }
+
+ if(!arr.length){
+
+  body.innerHTML = `
+
+  <tr>
+
+   <td
+   colspan="6"
+   class="empty">
+
+   لا يوجد عملاء
+
+   </td>
+
+  </tr>
+
+  `;
+
+  return;
+
+ }
+
+ body.innerHTML =
+  arr.map(c => {
+
+   const b =
+    balanceCustomer(c.id);
+
+   return `
+
+   <tr>
+
+    <td>${c.id}</td>
+
+    <td>${c.name}</td>
+
+    <td>${c.phone || "-"}</td>
+
+    <td>
+     ${money(b.USD,"USD")}
+    </td>
+
+    <td>
+     ${money(b.IQD,"IQD")}
+    </td>
+
+    <td>
+
+     <button
+     class="btn small secondary"
+     onclick="openCustomer('${c.id}')">
+
+     تعديل
+
+     </button>
+
+    </td>
+
+   </tr>
+
+   `;
+
+  }).join("");
+
+}
+
+
+/* =====================================================
+   ADD CUSTOMER
+   ===================================================== */
+
+function openCustomer(cid){
+
+ const c =
+  customer(cid) ||
+  {
+   name:"",
+   phone:"",
+   address:"",
+   notes:""
+  };
+
+ editId =
+  cid || null;
+
+ modal(`
+
+ <h2>
+ ${
+  cid
+  ? "✏️ تعديل العميل"
+  : "➕ إضافة عميل"
+ }
+ </h2>
+
+ <div class="form">
+
+  <label>
+
+   اسم العميل
+
+   <input
+   id="fName"
+   value="${c.name || ""}">
+
+  </label>
+
+  <label>
+
+   رقم الهاتف
+
+   <input
+   id="fPhone"
+   value="${c.phone || ""}">
+
+  </label>
+
+  <label class="full">
+
+   العنوان
+
+   <input
+   id="fAddress"
+   value="${c.address || ""}">
+
+  </label>
+
+  <label class="full">
+
+   ملاحظات
+
+   <textarea
+   id="fNotes">${c.notes || ""}</textarea>
+
+  </label>
+
+ </div>
+
+ <div class="actions">
+
+  <button
+  class="btn"
+  onclick="saveCustomer()">
+
+  💾 حفظ
+
+  </button>
+
+ </div>
+
+ `);
+
+}
+
+function saveCustomer(){
+
+ const name =
+  document.getElementById(
+   "fName"
+  ).value.trim();
+
+ if(!name){
+
+  alert(
+   "أدخل اسم العميل"
+  );
+
+  return;
+
+ }
+
+ const obj = {
+
+  id:
+   editId ||
+   nextId(
+    "CUS",
+    state.customers
+   ),
+
+  name:name,
+
+  phone:
+   document.getElementById(
+    "fPhone"
+   ).value.trim(),
+
+  address:
+   document.getElementById(
+    "fAddress"
+   ).value.trim(),
+
+  notes:
+   document.getElementById(
+    "fNotes"
+   ).value.trim()
+
+ };
+
+ if(editId){
+
+  const i =
+   state.customers.findIndex(
+    x => x.id === editId
+   );
+
+  if(i >= 0){
+
+   state.customers[i] =
+    obj;
+
+  }
+
+ }else{
+
+  state.customers.push(
+   obj
+  );
+
+ }
+
+ closeModal();
+
+ saveLocal();
+
+ render();
+
+}
+
+
+/* =====================================================
+   COMPANY BALANCE
+   ===================================================== */
+
+function balanceCompany(cid){
+
+ const b = {
+  USD:0,
+  IQD:0
+ };
+
+ state.transfers
+ .filter(
+  t => t.companyId === cid
+ )
+ .forEach(t => {
+
+  b[t.currency] =
+   (b[t.currency] || 0) +
+   Number(
+    t.amount || 0
+   );
+
+ });
+
+ state.payments
+ .filter(
+  p => p.companyId === cid
+ )
+ .forEach(p => {
+
+  if(p.direction === "له"){
+
+   b[p.currency] =
+    (b[p.currency] || 0) -
+    Number(
+     p.amount || 0
+    );
+
+  }else{
+
+   b[p.currency] =
+    (b[p.currency] || 0) +
+    Number(
+     p.amount || 0
+    );
+
+  }
+
+ });
+
+ state.clears
+ .filter(
+  c => c.companyId === cid
+ )
+ .forEach(c => {
+
+  if(
+   c.direction ===
+   "شركة إلى عميل"
+  ){
+
+   b[c.currency] =
+    (b[c.currency] || 0) +
+    Number(
+     c.amount || 0
+    );
+
+  }else{
+
+   b[c.currency] =
+    (b[c.currency] || 0) -
+    Number(
+     c.amount || 0
+    );
+
+  }
+
+ });
+
+ return b;
+
+}
+
+
+/* =====================================================
+   COMPANIES
+   ===================================================== */
+
+function companies(){
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="card">
+
+  <div class="section-head">
+
+   <h2>
+    🏢 الشركات
+   </h2>
+
+   <button
+   class="btn"
+   onclick="openCompany()">
+
+   ➕ إضافة شركة
+
+   </button>
+
+  </div>
+
+  <div class="toolbar">
+
+   <input
+   id="sq"
+   placeholder="🔍 البحث عن الشركة"
+   oninput="companyTable()">
+
+  </div>
+
+  <div class="tablewrap">
+
+  <table class="table">
+
+  <thead>
+
+  <tr>
+
+   <th>الرقم</th>
+   <th>الشركة</th>
+   <th>الهاتف</th>
+   <th>USD</th>
+   <th>IQD</th>
+   <th>إجراء</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody id="companyBody"></tbody>
+
+  </table>
+
+  </div>
+
+ </div>
+
+ `;
+
+ companyTable();
+
+}
+
+function companyTable(){
+
+ const q =
+  (
+   document.getElementById("sq")?.value ||
+   ""
+  ).toLowerCase();
+
+ const arr =
+  state.companies.filter(c =>
+   (
+    c.name +
+    " " +
+    (c.phone || "")
+   )
+   .toLowerCase()
+   .includes(q)
+  );
+
+ const body =
+  document.getElementById(
+   "companyBody"
+  );
+
+ if(!body){
+
+  return;
+
+ }
+
+ if(!arr.length){
+
+  body.innerHTML = `
+
+  <tr>
+
+   <td
+   colspan="6"
+   class="empty">
+
+   لا توجد شركات
+
+   </td>
+
+  </tr>
+
+  `;
+
+  return;
+
+ }
+
+ body.innerHTML =
+  arr.map(c => {
+
+   const b =
+    balanceCompany(c.id);
+
+   return `
+
+   <tr>
+
+    <td>${c.id}</td>
+
+    <td>${c.name}</td>
+
+    <td>${c.phone || "-"}</td>
+
+    <td>
+     ${money(b.USD,"USD")}
+    </td>
+
+    <td>
+     ${money(b.IQD,"IQD")}
+    </td>
+
+    <td>
+
+     <button
+     class="btn small secondary"
+     onclick="openCompany('${c.id}')">
+
+     تعديل
+
+     </button>
+
+    </td>
+
+   </tr>
+
+   `;
+
+  }).join("");
+
+}
+
+
+/* =====================================================
+   ADD COMPANY
+   ===================================================== */
+
+function openCompany(cid){
+
+ const c =
+  company(cid) ||
+  {
+   name:"",
+   phone:"",
+   address:"",
+   notes:""
+  };
+
+ editId =
+  cid || null;
+
+ modal(`
+
+ <h2>
+ ${
+  cid
+  ? "✏️ تعديل الشركة"
+  : "➕ إضافة شركة"
+ }
+ </h2>
+
+ <div class="form">
+
+  <label>
+
+   اسم الشركة
+
+   <input
+   id="fName"
+   value="${c.name || ""}">
+
+  </label>
+
+  <label>
+
+   الهاتف
+
+   <input
+   id="fPhone"
+   value="${c.phone || ""}">
+
+  </label>
+
+  <label class="full">
+
+   العنوان
+
+   <input
+   id="fAddress"
+   value="${c.address || ""}">
+
+  </label>
+
+  <label class="full">
+
+   ملاحظات
+
+   <textarea
+   id="fNotes">${c.notes || ""}</textarea>
+
+  </label>
+
+ </div>
+
+ <div class="actions">
+
+  <button
+  class="btn"
+  onclick="saveCompany()">
+
+  💾 حفظ
+
+  </button>
+
+ </div>
+
+ `);
+
+}
+
+function saveCompany(){
+
+ const name =
+  document.getElementById(
+   "fName"
+  ).value.trim();
+
+ if(!name){
+
+  alert(
+   "أدخل اسم الشركة"
+  );
+
+  return;
+
+ }
+
+ const obj = {
+
+  id:
+   editId ||
+   nextId(
+    "COM",
+    state.companies
+   ),
+
+  name:name,
+
+  phone:
+   document.getElementById(
+    "fPhone"
+   ).value.trim(),
+
+  address:
+   document.getElementById(
+    "fAddress"
+   ).value.trim(),
+
+  notes:
+   document.getElementById(
+    "fNotes"
+   ).value.trim()
+
+ };
+
+ if(editId){
+
+  const i =
+   state.companies.findIndex(
+    x => x.id === editId
+   );
+
+  if(i >= 0){
+
+   state.companies[i] =
+    obj;
+
+  }
+
+ }else{
+
+  state.companies.push(
+   obj
+  );
+
+ }
+
+ closeModal();
+
+ saveLocal();
+
+ render();
+
+}
+
+
+/* =====================================================
+   TRANSFERS
+   ===================================================== */
+
+function transfers(){
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="card">
+
+  <div class="section-head">
+
+   <h2>
+    💸 الحوالات
+   </h2>
+
+   <button
+   class="btn"
+   onclick="openTransfer()">
+
+   ➕ إضافة حوالة
+
+   </button>
+
+  </div>
+
+  <div class="toolbar">
+
+   <input
+   id="tq"
+   placeholder="🔍 رقم الحوالة أو العميل أو المستفيد"
+   oninput="transferTable()">
+
+  </div>
+
+  <div class="tablewrap">
+
+  <table class="table">
+
+  <thead>
+
+  <tr>
+
+   <th>الرقم</th>
+   <th>التاريخ</th>
+   <th>العميل</th>
+   <th>الشركة</th>
+   <th>المستفيد</th>
+   <th>المبلغ</th>
+   <th>العمولة</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody id="transferBody"></tbody>
+
+  </table>
+
+  </div>
+
+ </div>
+
+ `;
+
+ transferTable();
+
+}
+
+function transferTable(){
+
+ const q =
+  (
+   document.getElementById("tq")?.value ||
+   ""
+  ).toLowerCase();
+
+ const arr =
+  state.transfers
+
+  .filter(t =>
+   (
+    t.id +
+    " " +
+    (
+     customer(
+      t.customerId
+     )?.name || ""
+    ) +
+    " " +
+    (
+     t.beneficiary || ""
+    )
+   )
+   .toLowerCase()
+   .includes(q)
+  )
+
+  .sort(
+   (a,b) =>
+    String(b.date)
+    .localeCompare(
+     String(a.date)
+    )
+  );
+
+ const body =
+  document.getElementById(
+   "transferBody"
+  );
+
+ if(!body){
+
+  return;
+
+ }
+
+ if(!arr.length){
+
+  body.innerHTML = `
+
+  <tr>
+
+   <td
+   colspan="7"
+   class="empty">
+
+   لا توجد حوالات
+
+   </td>
+
+  </tr>
+
+  `;
+
+  return;
+
+ }
+
+ body.innerHTML =
+  arr.map(t => `
+
+ <tr>
+
+  <td>${t.id}</td>
+
+  <td>${t.date}</td>
+
+  <td>
+   ${customer(t.customerId)?.name || "-"}
+  </td>
+
+  <td>
+   ${company(t.companyId)?.name || "-"}
+  </td>
+
+  <td>
+   ${t.beneficiary || "-"}
+  </td>
+
+  <td>
+   ${money(t.amount,t.currency)}
+  </td>
+
+  <td>
+   ${money(t.commission,t.currency)}
+  </td>
+
+ </tr>
+
+ `).join("");
+
+}
+
+
+/* =====================================================
+   ADD TRANSFER
+   ===================================================== */
+
+function openTransfer(){
+
+ if(!state.customers.length){
+
+  alert(
+   "أضف عميلاً أولاً."
+  );
+
+  return;
+
+ }
+
+ if(!state.companies.length){
+
+  alert(
+   "أضف شركة أولاً."
+  );
+
+  return;
+
+ }
+
+ modal(`
+
+ <h2>
+  💸 إضافة حوالة
+ </h2>
+
+ <div class="form">
+
+  <label>
+
+   العميل
+
+   <select id="fCustomer">
+
+   ${state.customers.map(c => `
+
+   <option value="${c.id}">
+    ${c.name}
+   </option>
+
+   `).join("")}
+
+   </select>
+
+  </label>
+
+  <label>
+
+   الشركة
+
+   <select id="fCompany">
+
+   ${state.companies.map(c => `
+
+   <option value="${c.id}">
+    ${c.name}
+   </option>
+
+   `).join("")}
+
+   </select>
+
+  </label>
+
+  <label>
+
+   المستفيد
+
+   <input id="fBeneficiary">
+
+  </label>
+
+  <label>
+
+   التاريخ
+
+   <input
+   id="fDate"
+   type="date"
+   value="${new Date().toISOString().slice(0,10)}">
+
+  </label>
+
+  <label>
+
+   العملة
+
+   <select id="fCurrency">
+
+    <option value="USD">
+     USD
+    </option>
+
+    <option value="IQD">
+     IQD
+    </option>
+
+   </select>
+
+  </label>
+
+  <label>
+
+   المبلغ
+
+   <input
+   id="fAmount"
+   type="number"
+   step="any">
+
+  </label>
+
+  <label>
+
+   العمولة
+
+   <input
+   id="fCommission"
+   type="number"
+   step="any"
+   value="0">
+
+  </label>
+
+  <label class="full">
+
+   ملاحظات
+
+   <textarea
+   id="fNotes"></textarea>
+
+  </label>
+
+ </div>
+
+ <div class="actions">
+
+  <button
+  class="btn"
+  onclick="saveTransfer()">
+
+  💾 حفظ الحوالة
+
+  </button>
+
+ </div>
+
+ `);
+
+}
+
+function saveTransfer(){
+
+ const amount =
+  Number(
+   document.getElementById(
+    "fAmount"
+   ).value
+  );
+
+ if(!amount || amount <= 0){
+
+  alert(
+   "أدخل مبلغ الحوالة"
+  );
+
+  return;
+
+ }
+
+ const commission =
+  Number(
+   document.getElementById(
+    "fCommission"
+   ).value || 0
+  );
+
+ const currency =
+  document.getElementById(
+   "fCurrency"
+  ).value;
+
+ state.transfers.push({
+
+  id:
+   nextId(
+    "TR",
+    state.transfers
+   ),
+
+  customerId:
+   document.getElementById(
+    "fCustomer"
+   ).value,
+
+  companyId:
+   document.getElementById(
+    "fCompany"
+   ).value,
+
+  beneficiary:
+   document.getElementById(
+    "fBeneficiary"
+   ).value.trim(),
+
+  date:
+   document.getElementById(
+    "fDate"
+   ).value,
+
+  currency:currency,
+
+  amount:amount,
+
+  commission:commission,
+
+  total:
+   amount + commission,
+
+  notes:
+   document.getElementById(
+    "fNotes"
+   ).value.trim()
+
+ });
+
+ closeModal();
+
+ saveLocal();
+
+ render();
+
+}
+
+
+/* =====================================================
+   PAYMENTS
+   ===================================================== */
+
+function payments(){
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="card">
+
+  <div class="section-head">
+
+   <h2>
+    💰 التسديدات
+   </h2>
+
+   <button
+   class="btn"
+   onclick="openPayment()">
+
+   ➕ تسجيل تسديد
+
+   </button>
+
+  </div>
+
+  <div class="tablewrap">
+
+  <table class="table">
+
+  <thead>
+
+  <tr>
+
+   <th>الرقم</th>
+   <th>التاريخ</th>
+   <th>الحساب</th>
+   <th>النوع</th>
+   <th>المبلغ</th>
+   <th>ملاحظات</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody>
+
+  ${
+   state.payments
+   .slice()
+   .reverse()
+   .map(p => `
+
+   <tr>
+
+    <td>${p.id}</td>
+
+    <td>${p.date}</td>
+
+    <td>
+     ${
+      customer(p.customerId)?.name ||
+      company(p.companyId)?.name ||
+      "-"
+     }
+    </td>
+
+    <td>${p.direction}</td>
+
+    <td>
+     ${money(p.amount,p.currency)}
+    </td>
+
+    <td>
+     ${p.notes || "-"}
+    </td>
+
+   </tr>
+
+   `).join("")
+
+   ||
+
+   `
+
+   <tr>
+
+    <td
+    colspan="6"
+    class="empty">
+
+    لا توجد تسديدات
+
+    </td>
+
+   </tr>
+
+   `
+  }
+
+  </tbody>
+
+  </table>
+
+  </div>
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   ADD PAYMENT
+   ===================================================== */
+
+function openPayment(){
+
+ if(
+  !state.customers.length &&
+  !state.companies.length
+ ){
+
+  alert(
+   "أضف عميلاً أو شركة أولاً."
+  );
+
+  return;
+
+ }
+
+ modal(`
+
+ <h2>
+  💰 تسجيل تسديد
+ </h2>
+
+ <div class="form">
+
+  <label>
+
+   الحساب
+
+   <select id="fAccount">
+
+   ${state.customers.map(c => `
+
+   <option value="C:${c.id}">
+    👤 ${c.name}
+   </option>
+
+   `).join("")}
+
+   ${state.companies.map(c => `
+
+   <option value="O:${c.id}">
+    🏢 ${c.name}
+   </option>
+
+   `).join("")}
+
+   </select>
+
+  </label>
+
+  <label>
+
+   النوع
+
+   <select id="fDirection">
+
+    <option value="عليه">
+     عليه
+    </option>
+
+    <option value="له">
+     له
+    </option>
+
+   </select>
+
+  </label>
+
+  <label>
+
+   التاريخ
+
+   <input
+   id="fDate"
+   type="date"
+   value="${new Date().toISOString().slice(0,10)}">
+
+  </label>
+
+  <label>
+
+   العملة
+
+   <select id="fCurrency">
+
+    <option value="USD">
+     USD
+    </option>
+
+    <option value="IQD">
+     IQD
+    </option>
+
+   </select>
+
+  </label>
+
+  <label>
+
+   المبلغ
+
+   <input
+   id="fAmount"
+   type="number"
+   step="any">
+
+  </label>
+
+  <label class="full">
+
+   ملاحظات
+
+   <textarea
+   id="fNotes"></textarea>
+
+  </label>
+
+ </div>
+
+ <div class="actions">
+
+  <button
+  class="btn"
+  onclick="savePayment()">
+
+  💾 حفظ
+
+  </button>
+
+ </div>
+
+ `);
+
+}
+
+function savePayment(){
+
+ const account =
+  document.getElementById(
+   "fAccount"
+  ).value.split(":");
+
+ const amount =
+  Number(
+   document.getElementById(
+    "fAmount"
+   ).value
+  );
+
+ if(!amount || amount <= 0){
+
+  alert(
+   "أدخل المبلغ"
+  );
+
+  return;
+
+ }
+
+ state.payments.push({
+
+  id:
+   nextId(
+    "PAY",
+    state.payments
+   ),
+
+  date:
+   document.getElementById(
+    "fDate"
+   ).value,
+
+  direction:
+   document.getElementById(
+    "fDirection"
+   ).value,
+
+  currency:
+   document.getElementById(
+    "fCurrency"
+   ).value,
+
+  amount:amount,
+
+  notes:
+   document.getElementById(
+    "fNotes"
+   ).value.trim(),
+
+  customerId:
+   account[0] === "C"
+   ? account[1]
+   : null,
+
+  companyId:
+   account[0] === "O"
+   ? account[1]
+   : null
+
+ });
+
+ closeModal();
+
+ saveLocal();
+
+ render();
+
+}
+
+
+/* =====================================================
+   CLEARING
+   ===================================================== */
+
+function clears(){
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="card">
+
+  <div class="section-head">
+
+   <h2>
+    🔄 المقاصة
+   </h2>
+
+   <button
+   class="btn"
+   onclick="openClear()">
+
+   ➕ تسجيل مقاصة
+
+   </button>
+
+  </div>
+
+  <div class="tablewrap">
+
+  <table class="table">
+
+  <thead>
+
+  <tr>
+
+   <th>الرقم</th>
+   <th>التاريخ</th>
+   <th>الاتجاه</th>
+   <th>الشركة</th>
+   <th>العميل</th>
+   <th>المبلغ</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody>
+
+  ${
+   state.clears
+   .slice()
+   .reverse()
+   .map(c => `
+
+   <tr>
+
+    <td>${c.id}</td>
+
+    <td>${c.date}</td>
+
+    <td>${c.direction}</td>
+
+    <td>
+     ${company(c.companyId)?.name || "-"}
+    </td>
+
+    <td>
+     ${customer(c.customerId)?.name || "-"}
+    </td>
+
+    <td>
+     ${money(c.amount,c.currency)}
+    </td>
+
+   </tr>
+
+   `).join("")
+
+   ||
+
+   `
+
+   <tr>
+
+    <td
+    colspan="6"
+    class="empty">
+
+    لا توجد مقاصات
+
+    </td>
+
+   </tr>
+
+   `
+  }
+
+  </tbody>
+
+  </table>
+
+  </div>
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   ADD CLEARING
+   ===================================================== */
+
+function openClear(){
+
+ if(
+  !state.customers.length ||
+  !state.companies.length
+ ){
+
+  alert(
+   "أضف العملاء والشركات أولاً."
+  );
+
+  return;
+
+ }
+
+ modal(`
+
+ <h2>
+  🔄 تسجيل مقاصة
+ </h2>
+
+ <div class="form">
+
+  <label>
+
+   الاتجاه
+
+   <select id="fDirection">
+
+    <option>
+     شركة إلى عميل
+    </option>
+
+    <option>
+     عميل إلى شركة
+    </option>
+
+   </select>
+
+  </label>
+
+  <label>
+
+   الشركة
+
+   <select id="fCompany">
+
+   ${state.companies.map(c => `
+
+   <option value="${c.id}">
+    ${c.name}
+   </option>
+
+   `).join("")}
+
+   </select>
+
+  </label>
+
+  <label>
+
+   العميل
+
+   <select id="fCustomer">
+
+   ${state.customers.map(c => `
+
+   <option value="${c.id}">
+    ${c.name}
+   </option>
+
+   `).join("")}
+
+   </select>
+
+  </label>
+
+  <label>
+
+   التاريخ
+
+   <input
+   id="fDate"
+   type="date"
+   value="${new Date().toISOString().slice(0,10)}">
+
+  </label>
+
+  <label>
+
+   العملة
+
+   <select id="fCurrency">
+
+    <option value="USD">
+     USD
+    </option>
+
+    <option value="IQD">
+     IQD
+    </option>
+
+   </select>
+
+  </label>
+
+  <label>
+
+   المبلغ
+
+   <input
+   id="fAmount"
+   type="number"
+   step="any">
+
+  </label>
+
+ </div>
+
+ <div class="actions">
+
+  <button
+  class="btn"
+  onclick="saveClear()">
+
+  💾 حفظ
+
+  </button>
+
+ </div>
+
+ `);
+
+}
+
+function saveClear(){
+
+ const amount =
+  Number(
+   document.getElementById(
+    "fAmount"
+   ).value
+  );
+
+ if(!amount || amount <= 0){
+
+  alert(
+   "أدخل المبلغ"
+  );
+
+  return;
+
+ }
+
+ state.clears.push({
+
+  id:
+   nextId(
+    "CLR",
+    state.clears
+   ),
+
+  direction:
+   document.getElementById(
+    "fDirection"
+   ).value,
+
+  companyId:
+   document.getElementById(
+    "fCompany"
+   ).value,
+
+  customerId:
+   document.getElementById(
+    "fCustomer"
+   ).value,
+
+  date:
+   document.getElementById(
+    "fDate"
+   ).value,
+
+  currency:
+   document.getElementById(
+    "fCurrency"
+   ).value,
+
+  amount:amount
+
+ });
+
+ closeModal();
+
+ saveLocal();
+
+ render();
+
+}
+
+
+/* =====================================================
+   STATEMENTS
+   ===================================================== */
+
+function statements(){
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="card">
+
+  <h2>
+   📊 كشف الحساب
+  </h2>
+
+  <div class="toolbar">
+
+   <select
+   id="stType"
+   onchange="statementForm()">
+
+    <option value="customer">
+     👤 عميل
+    </option>
+
+    <option value="company">
+     🏢 شركة
+    </option>
+
+   </select>
+
+   <select id="stId"></select>
+
+   <select id="stCur">
+
+    <option value="USD">
+     USD
+    </option>
+
+    <option value="IQD">
+     IQD
+    </option>
+
+   </select>
+
+   <input
+   id="stFrom"
+   type="date">
+
+   <input
+   id="stTo"
+   type="date">
+
+   <button
+   class="btn"
+   onclick="showStatement()">
+
+   🔎 عرض
+
+   </button>
+
+  </div>
+
+  <div id="statementResult"></div>
+
+ </div>
+
+ `;
+
+ statementForm();
+
+}
+
+function statementForm(){
+
+ const type =
+  document.getElementById(
+   "stType"
+  ).value;
+
+ const arr =
+  type === "customer"
+  ? state.customers
+  : state.companies;
+
+ document.getElementById(
+  "stId"
+ ).innerHTML =
+
+ arr.map(x => `
+
+ <option value="${x.id}">
+  ${x.name}
+ </option>
+
+ `).join("");
+
+}
+
+function showStatement(){
+
+ const type =
+  document.getElementById(
+   "stType"
+  ).value;
+
+ const idv =
+  document.getElementById(
+   "stId"
+  ).value;
+
+ const cur =
+  document.getElementById(
+   "stCur"
+  ).value;
+
+ const from =
+  document.getElementById(
+   "stFrom"
+  ).value;
+
+ const to =
+  document.getElementById(
+   "stTo"
+  ).value;
+
+ let rows = [];
+
+
+ /* الحوالات */
+
+ state.transfers
+
+ .filter(t =>
+
+  (
+   type === "customer"
+   ? t.customerId === idv
+   : t.companyId === idv
+  )
+
+  &&
+
+  t.currency === cur
+
+ )
+
+ .forEach(t => {
+
+  rows.push({
+
+   date:t.date,
+
+   debit:
+    type === "customer"
+    ? Number(
+       t.total ||
+       t.amount ||
+       0
+      )
+    : Number(
+       t.amount || 0
+      ),
+
+   credit:0,
+
+   description:"حوالة"
+
+  });
+
+ });
+
+
+ /* التسديدات */
+
+ state.payments
+
+ .filter(p =>
+
+  (
+   type === "customer"
+   ? p.customerId === idv
+   : p.companyId === idv
+  )
+
+  &&
+
+  p.currency === cur
+
+ )
+
+ .forEach(p => {
+
+  rows.push({
+
+   date:p.date,
+
+   debit:
+    p.direction === "له"
+    ? 0
+    : Number(
+       p.amount || 0
+      ),
+
+   credit:
+    p.direction === "له"
+    ? Number(
+       p.amount || 0
+      )
+    : 0,
+
+   description:"تسديد"
+
+  });
+
+ });
+
+
+ /* المقاصة */
+
+ state.clears
+
+ .filter(c =>
+
+  (
+   type === "customer"
+   ? c.customerId === idv
+   : c.companyId === idv
+  )
+
+  &&
+
+  c.currency === cur
+
+ )
+
+ .forEach(c => {
+
+  if(
+   c.direction ===
+   "شركة إلى عميل"
+  ){
+
+   rows.push({
+
+    date:c.date,
+
+    debit:
+     type === "company"
+     ? Number(c.amount)
+     : 0,
+
+    credit:
+     type === "customer"
+     ? Number(c.amount)
+     : 0,
+
+    description:"مقاصة"
+
+   });
+
+  }else{
+
+   rows.push({
+
+    date:c.date,
+
+    debit:
+     type === "customer"
+     ? Number(c.amount)
+     : 0,
+
+    credit:
+     type === "company"
+     ? Number(c.amount)
+     : 0,
+
+    description:"مقاصة"
+
+   });
+
+  }
+
+ });
+
+ rows =
+  rows
+  .filter(r =>
+
+   (!from || r.date >= from) &&
+
+   (!to || r.date <= to)
+
+  )
+  .sort((a,b) =>
+
+   String(a.date)
+   .localeCompare(
+    String(b.date)
+   )
+
+  );
+
+ let balance = 0;
+
+ rows =
+  rows.map(r => {
+
+   balance +=
+    Number(r.debit || 0) -
+    Number(r.credit || 0);
+
+   return {
+    ...r,
+    balance
+   };
+
+  });
+
+ document.getElementById(
+  "statementResult"
+ ).innerHTML = `
+
+ <div class="tablewrap">
+
+ <table class="table">
+
+ <thead>
+
+ <tr>
+
+  <th>التاريخ</th>
+  <th>البيان</th>
+  <th>عليه</th>
+  <th>له</th>
+  <th>الرصيد</th>
+
+ </tr>
+
+ </thead>
+
+ <tbody>
+
+ ${
+  rows.map(r => `
+
+  <tr>
+
+   <td>
+    ${r.date}
+   </td>
+
+   <td>
+    ${r.description}
+   </td>
+
+   <td>
+    ${
+     r.debit
+     ? money(r.debit,cur)
+     : "-"
+    }
+   </td>
+
+   <td>
+    ${
+     r.credit
+     ? money(r.credit,cur)
+     : "-"
+    }
+   </td>
+
+   <td>
+    ${money(r.balance,cur)}
+   </td>
+
+  </tr>
+
+  `).join("")
+
+  ||
+
+  `
+
+  <tr>
+
+   <td
+   colspan="5"
+   class="empty">
+
+   لا توجد حركات
+
+   </td>
+
+  </tr>
+
+  `
+ }
+
+ </tbody>
+
+ </table>
+
+ </div>
+
+ <div
+ class="card"
+ style="margin-top:12px">
+
+ <b>
+  الرصيد النهائي:
+ </b>
+
+ ${money(balance,cur)}
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   REPORTS
+   ===================================================== */
+
+function reports(){
+
+ const usd =
+  state.transfers
+  .filter(
+   t => t.currency === "USD"
+  );
+
+ const iqd =
+  state.transfers
+  .filter(
+   t => t.currency === "IQD"
+  );
+
+ const totalUsd =
+  usd.reduce(
+   (s,t) =>
+    s + Number(
+     t.amount || 0
+    ),
+   0
+  );
+
+ const totalIqd =
+  iqd.reduce(
+   (s,t) =>
+    s + Number(
+     t.amount || 0
+    ),
+   0
+  );
+
+ const commission =
+  usd.reduce(
+   (s,t) =>
+    s + Number(
+     t.commission || 0
+    ),
+   0
+  );
+
+ document.getElementById("view").innerHTML = `
+
+ <div class="grid">
+
+  <div class="card stat">
+
+   <div class="label">
+    💸 عدد الحوالات
+   </div>
+
+   <div class="num">
+    ${state.transfers.length}
+   </div>
+
+  </div>
+
+  <div class="card stat">
+
+   <div class="label">
+    💵 إجمالي USD
+   </div>
+
+   <div class="num">
+    ${money(totalUsd,"USD")}
+   </div>
+
+  </div>
+
+  <div class="card stat">
+
+   <div class="label">
+    🇮🇶 إجمالي IQD
+   </div>
+
+   <div class="num">
+    ${money(totalIqd,"IQD")}
+   </div>
+
+  </div>
+
+  <div class="card stat">
+
+   <div class="label">
+    💰 عمولات USD
+   </div>
+
+   <div class="num">
+    ${money(commission,"USD")}
+   </div>
+
+  </div>
+
+ </div>
+
+ <div class="section card">
+
+  <h2>
+   📊 أرصدة العملاء
+  </h2>
+
+  <div class="tablewrap">
+
+  <table class="table">
+
+  <thead>
+
+  <tr>
+
+   <th>العميل</th>
+   <th>USD</th>
+   <th>IQD</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody>
+
+  ${
+   state.customers.map(c => {
+
+    const b =
+     balanceCustomer(c.id);
+
+    return `
+
+    <tr>
+
+     <td>
+      ${c.name}
+     </td>
+
+     <td>
+      ${money(b.USD,"USD")}
+     </td>
+
+     <td>
+      ${money(b.IQD,"IQD")}
+     </td>
+
+    </tr>
+
+    `;
+
+   }).join("")
+  }
+
+  </tbody>
+
+  </table>
+
+  </div>
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   ALERTS
+   ===================================================== */
+
+function alerts(){
+
+ document.getElementById(
+  "view"
+ ).innerHTML = `
+
+ <div class="card">
+
+  <h2>
+   🔔 التنبيهات
+  </h2>
+
+  ${lateRows()}
+
+ </div>
+
+ `;
+
+}
+
+
+/* =====================================================
+   SETTINGS
+   ===================================================== */
+
+function settings(){
+
+ const logged =
+  auth &&
+  auth.currentUser;
+
+ document.getElementById(
+  "view"
+ ).innerHTML = `
+
+ <div class="card">
+
+  <h2>
+   ⚙️ الإعدادات
+  </h2>
+
+  <div class="form">
+
+   <label>
+
+    اسم المكتب
+
+    <input
+    id="office"
+    value="${
+     state.settings.office ||
+     "نظام الحوالات"
+    }">
+
+   </label>
+
+  </div>
+
+  <div class="actions">
+
+   <button
+   class="btn"
+   onclick="saveOffice()">
+
+   💾 حفظ اسم المكتب
+
+   </button>
+
+  </div>
+
+  <hr>
+
+  <h3>
+   ☁️ المزامنة السحابية
+  </h3>
+
+  <p class="muted">
+   الحساب المستخدم:
+  </p>
+
+  <p>
+
+   ${
+    logged
+    ?
+    `<span class="badge ok">
+      ✅ ${logged.email}
+     </span>`
+    :
+    `<span class="badge bad">
+      🔐 غير مسجل الدخول
+     </span>`
+   }
+
+  </p>
+
+  <div class="actions">
+
+   <button
+   class="btn"
+   onclick="loginFirebase()">
+
+   🔐 تسجيل الدخول
+
+   </button>
+
+   <button
+   class="btn secondary"
+   onclick="logoutFirebase()">
+
+   🚪 تسجيل الخروج
+
+   </button>
+
+   <button
+   class="btn ok"
+   onclick="syncNow()">
+
+   ☁️ مزامنة الآن
+
+   </button>
+
+  </div>
+
+  <hr>
+
+  <h3>
+   💾 النسخ الاحتياطي
+  </h3>
+
+  <div class="actions">
+
+   <button
+   class="btn secondary"
+   onclick="backup()">
+
+   ⬇️ تنزيل نسخة احتياطية
+
+   </button>
+
+   <button
+   class="btn secondary"
+   onclick="document.getElementById('restoreFile').click()">
+
+   ⬆️ استعادة نسخة
+
+   </button>
+
+   <input
+   id="restoreFile"
+   type="file"
+   accept="application/json"
+   hidden
+   onchange="restore(this)">
+
+  </div>
+
+ </div>
+
+ `;
+
+}
+
+
+function saveOffice(){
+
+ const value =
+  document.getElementById(
+   "office"
+  ).value.trim();
+
+ state.settings.office =
+  value ||
+  "نظام الحوالات";
+
+ saveLocal();
+
+ alert(
+  "✅ تم حفظ اسم المكتب"
+ );
+
+ render();
+
+}
+
+
+/* =====================================================
+   START APPLICATION
+   ===================================================== */
+
+render();
+
+startCloudSync();
+
+</script>
+
+</body>
+</html>
